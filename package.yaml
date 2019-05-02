@@ -1,0 +1,51 @@
+name:                mssql-simple-example
+version:             0.1.0.0
+github:              "mitsuji/mssql-simple-example"
+license:             BSD3
+author:              "Takamasa Mitsuji"
+maintainer:          "tkms@mitsuji.org"
+copyright:           "2019 Takamasa Mitsuji"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/mitsuji/mssql-simple-example#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- ms-tds < 0.2
+- mssql-simple < 0.2
+
+
+library:
+  source-dirs: src
+
+executables:
+  mssql-simple-example-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - mssql-simple-example
+    - bytestring
+    - binary
+    - text
+    - time
+    - network
+    - tls
+    - attoparsec
+    - network-info
+    - uuid-types
+
+
