@@ -13,6 +13,10 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Text.Encoding as T
 
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.IO as LT
+
 import Database.Tds.Message
 import Database.MSSQLServer.Connection (Connection(..),ConnectInfo(..),AuthError(..))
 import Database.MSSQLServer.Query (Only(..),RpcResult(..),RpcQuery(..),StoredProcedure(..),RpcParam(..),QueryError(..))
@@ -63,6 +67,7 @@ main = do
 --    test_select1 conn
 --    test_select2 conn
 --    test_select3 conn
+--    test_select4 conn
     return ()
 
   where    
@@ -536,6 +541,42 @@ test_select3 conn = do
                            Nothing -> "Nothing"
                            Just t -> t
       T.putStr $ ", " <> case ntextn of
+                           Nothing -> "Nothing"
+                           Just t -> t
+      putStr $ ", " <> (show binaryn)
+      putStr $ ", " <> (show vbinaryn)
+      putStr $ ", " <> (show imagen)
+      putStrLn ""
+
+-- tds-0.1.0.2 
+test_select4 :: Connection -> IO ()
+test_select4 conn = do
+  rs <- MSSQL.sql conn "SELECT t3ID, t3BigChar, t3BigVarChar, t3Text, t3NChar, t3NVarChar, t3NText, t3BigBinary, t3BigVarBinary, t3Image, t3BigCharN, t3BigVarCharN, t3TextN, t3NCharN, t3NVarCharN, t3NTextN, t3BigBinaryN, t3BigVarBinaryN, t3ImageN FROM TTypes3"
+  f rs
+  where
+    f :: [(Int,LB.ByteString,LB.ByteString,LB.ByteString,LT.Text,LT.Text,LT.Text,LB.ByteString,LB.ByteString,LB.ByteString,(Maybe LB.ByteString),(Maybe LB.ByteString),(Maybe LB.ByteString),(Maybe LT.Text),(Maybe LT.Text),(Maybe LT.Text),(Maybe LB.ByteString),(Maybe LB.ByteString),(Maybe LB.ByteString))] -> IO ()
+    f rs = forM_ rs $ \(id,char,vchar,text,nchar,nvchar,ntext,binary,vbinary,image,charn,vcharn,textn,ncharn,nvcharn,ntextn,binaryn,vbinaryn,imagen) -> do
+      putStr $ (show id)
+      putStr $ ", " <> (show char)
+      putStr $ ", " <> (show vchar)
+      putStr $ ", " <> (show text)
+      LT.putStr $ ", " <> nchar
+      LT.putStr $ ", " <> nvchar
+      LT.putStr $ ", " <> ntext
+      putStr $ ", " <> (show binary)
+      putStr $ ", " <> (show vbinary)
+      putStr $ ", " <> (show image)
+      putStrLn ""
+      putStr $ "\t" <> (show charn)
+      putStr $ ", " <> (show vcharn)
+      putStr $ ", " <> (show textn)
+      LT.putStr $ ", " <> case ncharn of
+                           Nothing -> "Nothing"
+                           Just t -> t
+      LT.putStr $ ", " <> case nvcharn of
+                           Nothing -> "Nothing"
+                           Just t -> t
+      LT.putStr $ ", " <> case ntextn of
                            Nothing -> "Nothing"
                            Just t -> t
       putStr $ ", " <> (show binaryn)
