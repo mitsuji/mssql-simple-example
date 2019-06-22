@@ -1,0 +1,12 @@
+resolver: lts-6.35
+
+packages:
+- .
+
+extra-deps:
+- ms-tds-0.1.0.3
+- mssql-simple-0.1.0.4
+#- ../ms-tds
+#- ../mssql-simple
+- binary-0.8.7.0
+
