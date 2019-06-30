@@ -45,6 +45,8 @@ main = do
     select_exp1 conn
 --    select_exp2 conn
 --    select_exp3 conn
+--    select_exp4 conn
+--    select_exp5 conn
 --    select_table1 conn
 --    select_table2 conn
 --    select_table3 conn
@@ -122,6 +124,24 @@ select_exp3 conn = do
   case mnum of
     Nothing -> putStrLn "error: Uncomputable expression"
     Just num -> putStrLn $ show num
+
+
+  
+select_exp4 :: Connection -> IO ()
+select_exp4 conn = do
+  [(mnum1,mnum2)] <- MSSQL.sql conn $ "SELECT LEN(N'A" <> T.replicate 1900 "N" <> "Z')," <> "LEN(N'A" <> T.replicate 3000 "N" <> "Z')" :: IO [(Maybe Int, Maybe Int)]
+  case (mnum1,mnum2) of
+    (Nothing,_) -> putStrLn "error: Uncomputable expression"
+    (_,Nothing) -> putStrLn "error: Uncomputable expression"
+    (Just num1,Just num2) -> putStrLn $ show num1 <> ":" <> show num2
+
+
+
+select_exp5 :: Connection -> IO ()
+select_exp5 conn = do
+  [(text1,text2)] <- MSSQL.sql conn $ "SELECT N'A" <> T.replicate 1900 "N" <> "Z'," <> "N'A" <> T.replicate 3000 "N" <> "Z'" :: IO [(T.Text,T.Text)]
+  T.putStrLn text1
+  T.putStrLn text2
 
 
   

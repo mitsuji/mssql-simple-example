@@ -4,7 +4,7 @@ packages:
 - .
 
 extra-deps:
-- ms-tds-0.1.0.3
+- ms-tds-0.1.0.4
 - mssql-simple-0.1.0.4
 #- ../ms-tds
 #- ../mssql-simple
