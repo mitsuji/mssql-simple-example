@@ -18,8 +18,8 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.IO as LT
 
 import Database.Tds.Message
-import Database.MSSQLServer.Connection (Connection(..),ConnectInfo(..),AuthError(..))
-import Database.MSSQLServer.Query (Only(..),RpcResult(..),RpcQuery(..),StoredProcedure(..),RpcParam(..),QueryError(..))
+import Database.MSSQLServer.Connection
+import Database.MSSQLServer.Query
 import qualified Database.MSSQLServer.Connection as MSSQL
 import qualified Database.MSSQLServer.Query as MSSQL
 
@@ -32,16 +32,16 @@ import Control.Monad (forM_)
 
 main :: IO ()
 main = do
-  let info = ConnectInfo { connectHost = "192.168.0.1"
-                         , connectPort = "1433"
-                         , connectDatabase = "some_database"
-                         , connectUser = "some_user"
-                         , connectPassword = "some_password"
-                         }
+  let info = defaultConnectInfo { connectHost = "192.168.0.1"
+                                , connectPort = "1433"
+                                , connectDatabase = "some_database"
+                                , connectUser = "some_user"
+                                , connectPassword = "some_password"
+--                                , connectEncryption = 0x02 -- [MEMO] 0x00: Encrypt Login Only, 0x02: No Encryption
+                                }
   withSocketsDo $
     flip catches [authErrorHandler,queryErrorHandler] $
     bracket (MSSQL.connect info) MSSQL.close $ \conn -> do
---    bracket (MSSQL.connectWithoutEncription info) MSSQL.close $ \conn -> do
     select_exp1 conn
 --    select_exp2 conn
 --    select_exp3 conn
@@ -126,7 +126,7 @@ select_exp3 conn = do
     Just num -> putStrLn $ show num
 
 
-  
+
 select_exp4 :: Connection -> IO ()
 select_exp4 conn = do
   [(mnum1,mnum2)] <- MSSQL.sql conn $ "SELECT LEN(N'A" <> T.replicate 1900 "N" <> "Z')," <> "LEN(N'A" <> T.replicate 3000 "N" <> "Z')" :: IO [(Maybe Int, Maybe Int)]
@@ -379,7 +379,7 @@ rpc_rs3 conn id = do
 rpc_sql1 :: Connection -> IO ()
 rpc_sql1 conn = do
   RpcResult rets () rs <- MSSQL.rpc conn $
-    RpcQuery SP_ExecuteSql $ RpcParamVal "" (TINVarChar 1024 (Collation 0x1104d000 0x00)) ("SELECT * FROM TSome"::T.Text)
+    RpcQuery SP_ExecuteSql $ nvarcharVal "" "SELECT * FROM TSome"
   putStrLn $ "rets: " <> (show rets)
   f rs
   where
@@ -398,8 +398,8 @@ rpc_sql1 conn = do
 rpc_sql2 :: Connection -> Int -> IO ()
 rpc_sql2 conn max = do
   RpcResult rets () rs <- MSSQL.rpc conn $
-    RpcQuery ("sp_executesql"::T.Text) ( RpcParamVal "" (TINVarChar 1024 (Collation 0x1104d000 0x00)) ("SELECT * FROM TSome WHERE someID < @Max"::T.Text)
-                                       , RpcParamVal "" (TINVarChar 1024 (Collation 0x1104d000 0x00)) ("@Max Int"::T.Text)
+    RpcQuery ("sp_executesql"::T.Text) ( nvarcharVal "" "SELECT * FROM TSome WHERE someID < @Max"
+                                       , nvarcharVal "" "@Max Int"
                                        , RpcParamVal "" TIIntN4 max
                                        )
   putStrLn $ "rets: " <> (show rets)
@@ -420,11 +420,11 @@ rpc_sql2 conn max = do
 rpc_sql3 :: Connection -> Int -> Int -> IO ()
 rpc_sql3 conn min max = do
   RpcResult rets () rs <- MSSQL.rpc conn $
-    RpcQuery (0xa::Word16) ( RpcParamVal "" (TINVarChar 1024 (Collation 0x1104d000 0x00)) ("SELECT * FROM TSome WHERE @Min < someID AND someID < @Max"::T.Text)
-                 , RpcParamVal "" (TINVarChar 1024 (Collation 0x1104d000 0x00)) ("@Min Int, @Max Int"::T.Text)
-                 , RpcParamVal "@Min" TIIntN4 min
-                 , RpcParamVal "@Max" TIIntN4 max
-                 )
+    RpcQuery (0xa::Word16) ( nvarcharVal "" "SELECT * FROM TSome WHERE @Min < someID AND someID < @Max"
+                           , nvarcharVal "" "@Min Int, @Max Int"
+                           , RpcParamVal "@Min" TIIntN4 min
+                           , RpcParamVal "@Max" TIIntN4 max
+                           )
   putStrLn $ "rets: " <> (show rets)
   f rs
   where
@@ -445,8 +445,8 @@ rpc_sql3 conn min max = do
 rpc_insert1 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert1 conn title content = do
   RpcResult rets (Only id) () <- MSSQL.rpc conn $
-    RpcQuery ("SP_InsertSome"::T.Text) ( RpcParamVal "@Title" (TINVarChar 40 (Collation 0x1104d000 0x00)) title
-                                       , RpcParamVal "@Content" (TINVarChar 1024 (Collation 0x1104d000 0x00)) content
+    RpcQuery ("SP_InsertSome"::T.Text) ( nvarcharVal "@Title" title
+                                       , nvarcharVal "@Content" content
                                        , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
                                        )
     :: IO (RpcResult (Only Int) ())
@@ -457,8 +457,8 @@ rpc_insert1 conn title content = do
 rpc_insert2 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert2 conn title content = do
   RpcResult rets (id,time) () <- MSSQL.rpc conn $
-    RpcQuery ("SP_InsertSomeDate"::T.Text) ( RpcParamVal "@Title" (TINVarChar 40 (Collation 0x1104d000 0x00)) title
-                                           , RpcParamVal "@Content" (TINVarChar 1024 (Collation 0x1104d000 0x00)) content
+    RpcQuery ("SP_InsertSomeDate"::T.Text) ( nvarcharVal "@Title" title
+                                           , nvarcharVal "@Content" content
                                            , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
                                            , RpcParamRef "@Created" TIDateTimeN8 (Nothing :: Maybe UTCTime)
                                            )
@@ -568,7 +568,7 @@ test_select3 conn = do
       putStr $ ", " <> (show imagen)
       putStrLn ""
 
--- tds-0.1.0.2 
+
 test_select4 :: Connection -> IO ()
 test_select4 conn = do
   rs <- MSSQL.sql conn "SELECT t3ID, t3BigChar, t3BigVarChar, t3Text, t3NChar, t3NVarChar, t3NText, t3BigBinary, t3BigVarBinary, t3Image, t3BigCharN, t3BigVarCharN, t3TextN, t3NCharN, t3NVarCharN, t3NTextN, t3BigBinaryN, t3BigVarBinaryN, t3ImageN FROM TTypes3"
