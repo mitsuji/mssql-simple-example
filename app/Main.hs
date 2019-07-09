@@ -70,6 +70,8 @@ main = do
 --    test_select2 conn
 --    test_select3 conn
 --    test_select4 conn
+--    test_transaction1 conn
+--    test_transaction2 conn
     return ()
 
   where    
@@ -147,7 +149,7 @@ select_exp5 conn = do
   
 select_table1 :: Connection -> IO ()
 select_table1 conn = do
-  rs <- MSSQL.sql conn "SELECT * FROM TSome" :: IO [(Int,T.Text,T.Text,Money,UTCTime,Maybe UTCTime,Maybe UTCTime)]
+  rs <- MSSQL.sql conn "SELECT * FROM TSome ORDER BY someID, somePrice" :: IO [(Int,T.Text,T.Text,Money,UTCTime,Maybe UTCTime,Maybe UTCTime)]
   forM_ rs $ \(id,title,content,price,created,modified,deleted) -> do
       putStr   $ (show id)
       T.putStr $ ", " <> title
@@ -603,4 +605,18 @@ test_select4 conn = do
       putStr $ ", " <> (show vbinaryn)
       putStr $ ", " <> (show imagen)
       putStrLn ""
+
+
+test_transaction1 :: Connection -> IO ()
+test_transaction1 conn = withTransaction conn $ do
+  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = somePrice -100 WHERE someID = 1" :: IO ()
+  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = somePrice +100 WHERE someID = 2" :: IO ()
+  return ()
+
+
+test_transaction2 :: Connection -> IO ()
+test_transaction2 conn = withTransaction conn $ do
+  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = (somePrice -100) / 0 WHERE someID = 1" :: IO ()
+  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = somePrice +100 WHERE someID = 2" :: IO ()
+  return ()
 
