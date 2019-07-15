@@ -1,5 +1,5 @@
 name:                mssql-simple-example
-version:             0.2.0.0
+version:             0.3.0.0
 github:              "mitsuji/mssql-simple-example"
 license:             BSD3
 author:              "Takamasa Mitsuji"
@@ -21,8 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/mits
 
 dependencies:
 - base >= 4.7 && < 5
-- ms-tds >= 0.2 && < 0.3
-- mssql-simple >= 0.2 && < 0.3
+- ms-tds >= 0.3 && < 0.4
+- mssql-simple >= 0.3 && < 0.4
 
 
 library:
