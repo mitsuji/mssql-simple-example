@@ -52,8 +52,13 @@ main = do
 --    select_table3 conn
 --    select_table4 conn
 --    select_table5 conn
+--    select_table6 conn
+--    select_table7 conn
+--    select_table8 conn
+--    select_table9 conn
 --    insert_table1 conn
 --    insert_table2 conn
+--    insert_table3 conn
 --    update_table1 conn
 --    rpc1 conn 3
 --    rpc_rv1 conn 3
@@ -141,42 +146,26 @@ select_exp4 conn = do
 
 select_exp5 :: Connection -> IO ()
 select_exp5 conn = do
-  [(text1,text2)] <- MSSQL.sql conn $ "SELECT N'A" <> T.replicate 1900 "N" <> "Z'," <> "N'A" <> T.replicate 3000 "N" <> "Z'" :: IO [(T.Text,T.Text)]
-  T.putStrLn text1
-  T.putStrLn text2
+  [(text1,text2)] <- MSSQL.sql conn $ "SELECT N'A" <> T.replicate 1900 "N" <> "Z'," <> "N'A" <> T.replicate 3000 "N" <> "Z'" :: IO [(LT.Text,LT.Text)]
+  LT.putStrLn text1
+  LT.putStrLn text2
 
 
   
 select_table1 :: Connection -> IO ()
 select_table1 conn = do
-  rs <- MSSQL.sql conn "SELECT * FROM TSome ORDER BY someID, somePrice" :: IO [(Int,T.Text,T.Text,Money,UTCTime,Maybe UTCTime,Maybe UTCTime)]
-  forM_ rs $ \(id,title,content,price,created,modified,deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+  rs <- MSSQL.sql conn "SELECT TOP 10 * FROM TSome" :: IO [(Int,T.Text,T.Text,Money,UTCTime,Maybe UTCTime,Maybe UTCTime)]
+  forM_ rs print
 
 
   
 select_table2 :: Connection -> IO ()
 select_table2 conn = do
-  rs <- MSSQL.sql conn "SELECT * FROM TSome"
+  rs <- MSSQL.sql conn "SELECT TOP 10 * FROM TSome ORDER BY somePrice, someID"
   f rs
   where
-    f :: [(Int,T.Text,T.Text,Money,UTCTime,Maybe UTCTime,Maybe UTCTime)] -> IO ()
-    f rs = forM_ rs $ \(id,title,content,price,created,modified,deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+    f :: [(Int,String,LT.Text,Money,UTCTime,Maybe UTCTime,Maybe UTCTime)] -> IO ()
+    f rs = forM_ rs print
 
 
 
@@ -215,39 +204,48 @@ instance MSSQL.Row Some where
 
 select_table4 :: Connection -> IO ()
 select_table4 conn = do
-  rs <- MSSQL.sql conn "SELECT * FROM TSome" :: IO [Some]
-  mapM_ f rs
-  where
-    f :: Some -> IO ()
-    f (Some id title content price created modified deleted) = do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+  rs <- MSSQL.sql conn "SELECT TOP 10 * FROM TSome ORDER BY somePrice DESC" :: IO [Some]
+  mapM_ print rs
 
 
   
 select_table5 :: Connection -> IO ()
 select_table5 conn = do
-  (rs1,rs2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 ORDER BY someID DESC" :: IO ([Some],[Some])
-  mapM_ f rs1
+  (rs1,rs2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO ([Some],[Some])
+  mapM_ print rs1
   putStrLn "----"
-  mapM_ f rs2
-  where
-    f :: Some -> IO ()
-    f (Some id title content price created modified deleted) = do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+  mapM_ print rs2
+
+
+  
+select_table6 :: Connection -> IO ()
+select_table6 conn = do
+  (_,rs2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO ((),[Some])
+  mapM_ print rs2
+
+
+  
+select_table7 :: Connection -> IO ()
+select_table7 conn = do
+  (rc1,rs2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO (Int,[Some])
+  putStrLn $ show rc1
+  mapM_ print rs2
+
+
+
+select_table8 :: Connection -> IO ()
+select_table8 conn = do
+  (rs1,_) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO ([Some],())
+  mapM_ print rs1
+
+
+select_table9 :: Connection -> IO ()
+select_table9 conn = do
+  (rs1,rc2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO ([Some],Int)
+  mapM_ print rs1
+  putStrLn "----"
+  putStrLn $ show rc2
+
 
 
       
@@ -259,13 +257,22 @@ insert_table1 conn = do
 
 insert_table2 :: Connection -> IO ()
 insert_table2 conn = do
-  _ <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',23456.70,GETDATE())" :: IO ()
+  rc <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',12345.60,GETDATE())" :: IO Int
+  putStrLn $ show rc
+  return ()
+
+
+insert_table3 :: Connection -> IO ()
+insert_table3 conn = do
+  (rc1,rc2) <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',23456.70,GETDATE())" :: IO (Int,Int)
+  putStrLn $ show rc2 <> " " <> show rc2
   return ()
 
   
 update_table1 :: Connection -> IO ()
 update_table1 conn = do
-  _ <- MSSQL.sql conn "UPDATE TSome SET somePrice = somePrice + 1 WHERE someID = 5" :: IO ()
+  rc <- MSSQL.sql conn "UPDATE TSome SET somePrice = somePrice + 1 WHERE someID < 5" :: IO Int
+  putStrLn $ show rc
   return ()
 
 
@@ -275,65 +282,45 @@ update_table1 conn = do
 
 rpc1 :: Connection -> Int -> IO ()
 rpc1 conn val1 = do
-  RpcResult rets () () <- MSSQL.rpc conn $
+  RpcResponse rets () () <- MSSQL.rpc conn $
     RpcQuery ("SP_Input1"::T.Text) $ RpcParamVal "@Val1" TIIntN4 val1
   putStrLn $ "rets: " <> (show rets)
 
 
 rpc_rv1 :: Connection -> Int -> IO ()
 rpc_rv1 conn id = do
-  RpcResult rets (Only id') () <- MSSQL.rpc conn $
+  RpcResponse rets (Only id') () <- MSSQL.rpc conn $
     RpcQuery ("SP_OutputTwice"::T.Text) $ RpcParamRef "@ID" TIIntN4 id
-    :: IO (RpcResult (Only Int) ())
+    :: IO (RpcResponse (Only Int) ())
   putStrLn $ "rets: " <> (show rets)
   putStrLn $ "id: " <> (show id')
 
 
 rpc_rv_rs1 :: Connection -> Int -> IO ()
 rpc_rv_rs1 conn id = do
-  RpcResult rets (Only id') rs <- MSSQL.rpc conn $
+  RpcResponse rets (Only id') rs <- MSSQL.rpc conn $
     RpcQuery ("SP_OutputTwice_SelectSome"::T.Text) $ RpcParamRef "@ID" TIIntN4 id
-    :: IO (RpcResult (Only Int) [Some])
+    :: IO (RpcResponse (Only Int) [Some])
   putStrLn $ "rets: " <> (show rets)
   putStrLn $ "id: " <> (show id')
-  mapM_ f rs
-  where
-    f :: Some -> IO ()
-    f (Some id title content price created modified deleted) = do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
-
+  mapM_ print rs
 
 
 rpc_rs1 :: Connection -> Int -> IO ()
 rpc_rs1 conn id = do
-  RpcResult rets () rs <- MSSQL.rpc conn $
+  RpcResponse rets () rs <- MSSQL.rpc conn $
     RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id
   putStrLn $ "rets: " <> (show rets)
   f rs
   where
     f :: [Some] -> IO ()
-    f rs = forM_ rs $ \(Some id title content price created modified deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+    f rs = forM_ rs print
 
       
 
 rpc_rs2 :: Connection -> Int -> Int -> IO ()
 rpc_rs2 conn id1 id2 = do
-  (RpcResult rets1 () rs1, RpcResult rets2 () rs2) <- MSSQL.rpc conn
+  (RpcResponse rets1 () rs1, RpcResponse rets2 () rs2) <- MSSQL.rpc conn
     ( RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id1
     , RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id2
     )
@@ -344,20 +331,13 @@ rpc_rs2 conn id1 id2 = do
   f rs2
   where
     f :: [Some] -> IO ()
-    f rs = forM_ rs $ \(Some id title content price created modified deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+    f rs = forM_ rs print
+
 
 
 rpc_rs3 :: Connection -> Int -> IO ()
 rpc_rs3 conn id = do
-  RpcResult rets () (rs1,rs2) <- MSSQL.rpc conn $
+  RpcResponse rets () (rs1,rs2) <- MSSQL.rpc conn $
     RpcQuery ("SP_SplitSomeByID"::T.Text) $ RpcParamVal "" TIIntN4 id
   putStrLn $ "rets: " <> (show rets)
   f rs1
@@ -365,41 +345,25 @@ rpc_rs3 conn id = do
   f rs2
   where
     f :: [Some] -> IO ()
-    f rs = forM_ rs $ \(Some id title content price created modified deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
-
+    f rs = forM_ rs print
 
 
 
 rpc_sql1 :: Connection -> IO ()
 rpc_sql1 conn = do
-  RpcResult rets () rs <- MSSQL.rpc conn $
+  RpcResponse rets () rs <- MSSQL.rpc conn $
     RpcQuery SP_ExecuteSql $ nvarcharVal "" "SELECT * FROM TSome"
   putStrLn $ "rets: " <> (show rets)
   f rs
   where
     f :: [Some] -> IO ()
-    f rs = forM_ rs $ \(Some id title content price created modified deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+    f rs = forM_ rs print
+
 
 
 rpc_sql2 :: Connection -> Int -> IO ()
 rpc_sql2 conn max = do
-  RpcResult rets () rs <- MSSQL.rpc conn $
+  RpcResponse rets () rs <- MSSQL.rpc conn $
     RpcQuery ("sp_executesql"::T.Text) ( nvarcharVal "" "SELECT * FROM TSome WHERE someID < @Max"
                                        , nvarcharVal "" "@Max Int"
                                        , RpcParamVal "" TIIntN4 max
@@ -408,20 +372,13 @@ rpc_sql2 conn max = do
   f rs
   where
     f :: [Some] -> IO ()
-    f rs = forM_ rs $ \(Some id title content price created modified deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
+    f rs = forM_ rs print
+
 
 
 rpc_sql3 :: Connection -> Int -> Int -> IO ()
 rpc_sql3 conn min max = do
-  RpcResult rets () rs <- MSSQL.rpc conn $
+  RpcResponse rets () rs <- MSSQL.rpc conn $
     RpcQuery (0xa::Word16) ( nvarcharVal "" "SELECT * FROM TSome WHERE @Min < someID AND someID < @Max"
                            , nvarcharVal "" "@Min Int, @Max Int"
                            , RpcParamVal "@Min" TIIntN4 min
@@ -431,40 +388,31 @@ rpc_sql3 conn min max = do
   f rs
   where
     f :: [Some] -> IO ()
-    f rs = forM_ rs $ \(Some id title content price created modified deleted) -> do
-      putStr   $ (show id)
-      T.putStr $ ", " <> title
-      T.putStr $ ", " <> content
-      putStr   $ ", " <> (show price)
-      putStr   $ ", " <> (show created)
-      putStr   $ ", " <> (show modified)
-      putStr   $ ", " <> (show deleted)
-      putStrLn ""
-
+    f rs = forM_ rs print
 
 
 
 rpc_insert1 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert1 conn title content = do
-  RpcResult rets (Only id) () <- MSSQL.rpc conn $
+  RpcResponse rets (Only id) () <- MSSQL.rpc conn $
     RpcQuery ("SP_InsertSome"::T.Text) ( nvarcharVal "@Title" title
                                        , nvarcharVal "@Content" content
                                        , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
                                        )
-    :: IO (RpcResult (Only Int) ())
+    :: IO (RpcResponse (Only Int) ())
   putStrLn $ "rets: " <> (show rets)
   putStrLn $ "id: " <> (show id)
 
 
 rpc_insert2 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert2 conn title content = do
-  RpcResult rets (id,time) () <- MSSQL.rpc conn $
+  RpcResponse rets (id,time) () <- MSSQL.rpc conn $
     RpcQuery ("SP_InsertSomeDate"::T.Text) ( nvarcharVal "@Title" title
                                            , nvarcharVal "@Content" content
                                            , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
                                            , RpcParamRef "@Created" TIDateTimeN8 (Nothing :: Maybe UTCTime)
                                            )
-    :: IO (RpcResult (Int,UTCTime) ())
+    :: IO (RpcResponse (Int,UTCTime) ())
   putStrLn $ "rets: " <> (show rets)
   putStrLn $ "id: " <> (show id)
   putStrLn $ "time: " <> (show time)
@@ -616,7 +564,7 @@ test_transaction1 conn = withTransaction conn $ do
 
 test_transaction2 :: Connection -> IO ()
 test_transaction2 conn = withTransaction conn $ do
-  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = (somePrice -100) / 0 WHERE someID = 1" :: IO ()
-  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = somePrice +100 WHERE someID = 2" :: IO ()
+  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = somePrice -100 WHERE someID = 1" :: IO ()
+  _ <- MSSQL.sql conn $ "UPDATE TSome SET somePrice = (somePrice +100) / 0 WHERE someID = 2" :: IO ()
   return ()
 
