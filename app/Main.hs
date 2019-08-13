@@ -60,6 +60,19 @@ main = do
 --    insert_table2 conn
 --    insert_table3 conn
 --    update_table1 conn
+--    delete_table1 conn
+--    exec_proc1_1 conn
+--    exec_proc1_2 conn
+--    exec_proc1_3 conn
+--    exec_proc1_4 conn
+--    exec_proc2_1 conn
+--    exec_proc2_2 conn
+--    exec_proc3_1 conn
+--    exec_proc3_2 conn
+--    exec_proc2_1' conn
+--    exec_proc2_2' conn
+--    exec_proc3_1' conn
+--    exec_proc3_2' conn
 --    rpc1 conn 3
 --    rpc_rv1 conn 3
 --    rpc_rv_rs1 conn 3
@@ -85,27 +98,24 @@ main = do
     authErrorHandler = Handler f
       where
         f :: AuthError -> IO ()
-        f (AuthError (Info number state class' msgText serverName procName lineNumber)) = do
-          putStrLn $ "number: " <> (show number)
-          putStrLn $ "state: "  <> (show state)
-          putStrLn $ "class: "  <> (show class')
-          T.putStrLn $ "msgText: " <> msgText
-          T.putStrLn $ "serverName: " <> serverName
-          T.putStrLn $ "procName: " <> procName
-          putStrLn $ "lineNumber: " <> (show lineNumber)
+        f (AuthError info) = printInfo info
 
     queryErrorHandler :: Handler ()
     queryErrorHandler = Handler f
       where
         f :: QueryError -> IO ()
-        f (QueryError (Info number state class' msgText serverName procName lineNumber)) = do
-          putStrLn $ "number: " <> (show number)
-          putStrLn $ "state: "  <> (show state)
-          putStrLn $ "class: "  <> (show class')
-          T.putStrLn $ "msgText: " <> msgText
-          T.putStrLn $ "serverName: " <> serverName
-          T.putStrLn $ "procName: " <> procName
-          putStrLn $ "lineNumber: " <> (show lineNumber)
+        f (QueryError info) = printInfo info
+
+
+printInfo :: Info -> IO ()
+printInfo (Info number state class' msgText serverName procName lineNumber) = do
+  putStrLn $ "number: " <> (show number)
+  putStrLn $ "state: "  <> (show state)
+  putStrLn $ "class: "  <> (show class')
+  T.putStrLn $ "msgText: " <> msgText
+  T.putStrLn $ "serverName: " <> serverName
+  T.putStrLn $ "procName: " <> procName
+  putStrLn $ "lineNumber: " <> (show lineNumber)
 
 
 
@@ -227,7 +237,7 @@ select_table6 conn = do
   
 select_table7 :: Connection -> IO ()
 select_table7 conn = do
-  (rc1,rs2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO (Int,[Some])
+  (RowCount rc1,rs2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO (RowCount,[Some])
   putStrLn $ show rc1
   mapM_ print rs2
 
@@ -241,7 +251,7 @@ select_table8 conn = do
 
 select_table9 :: Connection -> IO ()
 select_table9 conn = do
-  (rs1,rc2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO ([Some],Int)
+  (rs1,RowCount rc2) <- MSSQL.sql conn "SELECT * FROM TSome WHERE someID < 8 ORDER BY someID; SELECT * FROM TSome WHERE someID > 8 AND someID < 12 ORDER BY someID DESC" :: IO ([Some],RowCount)
   mapM_ print rs1
   putStrLn "----"
   putStrLn $ show rc2
@@ -257,22 +267,97 @@ insert_table1 conn = do
 
 insert_table2 :: Connection -> IO ()
 insert_table2 conn = do
-  rc <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',12345.60,GETDATE())" :: IO Int
+  RowCount rc <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',12345.60,GETDATE())" :: IO RowCount
   putStrLn $ show rc
   return ()
 
 
 insert_table3 :: Connection -> IO ()
 insert_table3 conn = do
-  (rc1,rc2) <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',23456.70,GETDATE())" :: IO (Int,Int)
+  (RowCount rc1,RowCount rc2) <- MSSQL.sql conn "INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES(N'title',N'content',23456.70,GETDATE())" :: IO (RowCount,RowCount)
   putStrLn $ show rc2 <> " " <> show rc2
   return ()
 
   
 update_table1 :: Connection -> IO ()
 update_table1 conn = do
-  rc <- MSSQL.sql conn "UPDATE TSome SET somePrice = somePrice + 1 WHERE someID < 5" :: IO Int
+  RowCount rc <- MSSQL.sql conn "UPDATE TSome SET somePrice = somePrice + 1 WHERE someID < 5" :: IO RowCount
   putStrLn $ show rc
+  return ()
+
+
+delete_table1 :: Connection -> IO ()
+delete_table1 conn = do
+  RowCount rc <- MSSQL.sql conn "DELETE TSome WHERE someID > 50" :: IO RowCount
+  putStrLn $ show rc
+  return ()
+
+
+exec_proc1_1 :: Connection -> IO ()
+exec_proc1_1 conn = do
+  _ <- MSSQL.sql conn "EXEC SP_Input1 @Val1=3" :: IO ()
+  return ()
+
+exec_proc1_2 :: Connection -> IO ()
+exec_proc1_2 conn = do
+  _ <- MSSQL.sql conn "EXEC SP_Input1 @Val1=3;EXEC SP_Input1 @Val1=4" :: IO ((),())
+  return ()
+
+exec_proc1_3 :: Connection -> IO ()
+exec_proc1_3 conn = do
+  ReturnStatus rets <- MSSQL.sql conn "EXEC SP_Input1 @Val1=3" :: IO ReturnStatus
+  putStrLn $ show rets
+  return ()
+
+exec_proc1_4 :: Connection -> IO ()
+exec_proc1_4 conn = do
+  (ReturnStatus rets1, ReturnStatus rets2) <- MSSQL.sql conn "EXEC SP_Input1 @Val1=3;EXEC SP_Input1 @Val1=4" :: IO (ReturnStatus,ReturnStatus)
+  putStrLn $ show rets1 <> " " <> show rets2
+  return ()
+
+exec_proc2_1 :: Connection -> IO ()
+exec_proc2_1 conn = do
+  _ <- MSSQL.sql conn "EXEC SP_OutputTwice @ID=3" :: IO ()
+  return ()
+
+exec_proc2_2 :: Connection -> IO ()
+exec_proc2_2 conn = do
+  _ <- MSSQL.sql conn "EXEC SP_OutputTwice @ID=3;EXEC SP_OutputTwice @ID=4" :: IO ((),())
+  return ()
+
+exec_proc3_1 :: Connection -> IO ()
+exec_proc3_1 conn = do
+  _ <- MSSQL.sql conn "EXEC SP_OutputTwice_SelectSome @ID=3" :: IO ()
+  return ()
+
+exec_proc3_2 :: Connection -> IO ()
+exec_proc3_2 conn = do
+  _ <- MSSQL.sql conn "EXEC SP_OutputTwice_SelectSome @ID=3;EXEC SP_OutputTwice_SelectSome @ID=4" :: IO ((),())
+  return ()
+
+
+exec_proc2_1' :: Connection -> IO ()
+exec_proc2_1' conn = do
+  ReturnStatus rs <- MSSQL.sql conn "EXEC SP_OutputTwice @ID=3" :: IO ReturnStatus
+  putStrLn $ show rs
+  return ()
+
+exec_proc2_2' :: Connection -> IO ()
+exec_proc2_2' conn = do
+  (ReturnStatus rs1, ReturnStatus rs2) <- MSSQL.sql conn "EXEC SP_OutputTwice @ID=3;EXEC SP_OutputTwice @ID=4" :: IO (ReturnStatus,ReturnStatus)
+  putStrLn $ (show rs1) <> " " <> (show rs2)
+  return ()
+
+exec_proc3_1' :: Connection -> IO ()
+exec_proc3_1' conn = do
+  ReturnStatus rs <- MSSQL.sql conn "EXEC SP_OutputTwice_SelectSome @ID=3" :: IO ReturnStatus
+  putStrLn $ show rs
+  return ()
+
+exec_proc3_2' :: Connection -> IO ()
+exec_proc3_2' conn = do
+  (ReturnStatus rs1, ReturnStatus rs2) <- MSSQL.sql conn "EXEC SP_OutputTwice_SelectSome @ID=3;EXEC SP_OutputTwice_SelectSome @ID=4" :: IO (ReturnStatus,ReturnStatus)
+  putStrLn $ (show rs1) <> " " <> (show rs2)
   return ()
 
 
@@ -282,53 +367,84 @@ update_table1 conn = do
 
 rpc1 :: Connection -> Int -> IO ()
 rpc1 conn val1 = do
-  RpcResponse rets () () <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_Input1"::T.Text) $ RpcParamVal "@Val1" TIIntN4 val1
-  putStrLn $ "rets: " <> (show rets)
+
+  case resp of
+    RpcResponse rets () () -> putStrLn $ "rets: " <> (show rets)
+    RpcResponseError info -> putStr "error: " >> printInfo info
 
 
 rpc_rv1 :: Connection -> Int -> IO ()
 rpc_rv1 conn id = do
-  RpcResponse rets (Only id') () <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_OutputTwice"::T.Text) $ RpcParamRef "@ID" TIIntN4 id
     :: IO (RpcResponse (Only Int) ())
-  putStrLn $ "rets: " <> (show rets)
-  putStrLn $ "id: " <> (show id')
+
+  case resp of
+    RpcResponse rets (Only id') () -> do
+      putStrLn $ "rets: " <> (show rets)
+      putStrLn $ "id: " <> (show id')
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
 
 
 rpc_rv_rs1 :: Connection -> Int -> IO ()
 rpc_rv_rs1 conn id = do
-  RpcResponse rets (Only id') rs <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_OutputTwice_SelectSome"::T.Text) $ RpcParamRef "@ID" TIIntN4 id
     :: IO (RpcResponse (Only Int) [Some])
-  putStrLn $ "rets: " <> (show rets)
-  putStrLn $ "id: " <> (show id')
-  mapM_ print rs
+
+  case resp of
+    RpcResponse rets (Only id') rs -> do
+      putStrLn $ "rets: " <> (show rets)
+      putStrLn $ "id: " <> (show id')
+      mapM_ print rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
 
 
 rpc_rs1 :: Connection -> Int -> IO ()
 rpc_rs1 conn id = do
-  RpcResponse rets () rs <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id
-  putStrLn $ "rets: " <> (show rets)
-  f rs
+
+  case resp of
+    RpcResponse rets () rs -> do
+      putStrLn $ "rets: " <> (show rets)
+      f rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   where
     f :: [Some] -> IO ()
     f rs = forM_ rs print
 
-      
+
 
 rpc_rs2 :: Connection -> Int -> Int -> IO ()
 rpc_rs2 conn id1 id2 = do
-  (RpcResponse rets1 () rs1, RpcResponse rets2 () rs2) <- MSSQL.rpc conn
+  (resp1, resp2) <- MSSQL.rpc conn
     ( RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id1
     , RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id2
     )
-  putStrLn $ "rets1: " <> (show rets1)
-  f rs1
+
+  case resp1 of
+    RpcResponse rets () rs -> do
+      putStrLn $ "rets1: " <> (show rets)
+      f rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   putStrLn "----"
-  putStrLn $ "rets2: " <> (show rets2)
-  f rs2
+
+  case resp2 of
+    RpcResponse rets () rs -> do
+      putStrLn $ "rets2: " <> (show rets)
+      f rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   where
     f :: [Some] -> IO ()
     f rs = forM_ rs print
@@ -337,12 +453,18 @@ rpc_rs2 conn id1 id2 = do
 
 rpc_rs3 :: Connection -> Int -> IO ()
 rpc_rs3 conn id = do
-  RpcResponse rets () (rs1,rs2) <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_SplitSomeByID"::T.Text) $ RpcParamVal "" TIIntN4 id
-  putStrLn $ "rets: " <> (show rets)
-  f rs1
-  putStrLn "----"
-  f rs2
+
+  case resp of
+    RpcResponse rets () (rs1,rs2) -> do
+      putStrLn $ "rets: " <> (show rets)
+      f rs1
+      putStrLn "----"
+      f rs2
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   where
     f :: [Some] -> IO ()
     f rs = forM_ rs print
@@ -351,10 +473,16 @@ rpc_rs3 conn id = do
 
 rpc_sql1 :: Connection -> IO ()
 rpc_sql1 conn = do
-  RpcResponse rets () rs <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery SP_ExecuteSql $ nvarcharVal "" "SELECT * FROM TSome"
-  putStrLn $ "rets: " <> (show rets)
-  f rs
+
+  case resp of
+    RpcResponse rets () rs -> do
+      putStrLn $ "rets: " <> (show rets)
+      f rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   where
     f :: [Some] -> IO ()
     f rs = forM_ rs print
@@ -363,13 +491,19 @@ rpc_sql1 conn = do
 
 rpc_sql2 :: Connection -> Int -> IO ()
 rpc_sql2 conn max = do
-  RpcResponse rets () rs <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("sp_executesql"::T.Text) ( nvarcharVal "" "SELECT * FROM TSome WHERE someID < @Max"
                                        , nvarcharVal "" "@Max Int"
                                        , RpcParamVal "" TIIntN4 max
                                        )
-  putStrLn $ "rets: " <> (show rets)
-  f rs
+
+  case resp of
+    RpcResponse rets () rs -> do
+      putStrLn $ "rets: " <> (show rets)
+      f rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   where
     f :: [Some] -> IO ()
     f rs = forM_ rs print
@@ -378,14 +512,20 @@ rpc_sql2 conn max = do
 
 rpc_sql3 :: Connection -> Int -> Int -> IO ()
 rpc_sql3 conn min max = do
-  RpcResponse rets () rs <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery (0xa::Word16) ( nvarcharVal "" "SELECT * FROM TSome WHERE @Min < someID AND someID < @Max"
                            , nvarcharVal "" "@Min Int, @Max Int"
                            , RpcParamVal "@Min" TIIntN4 min
                            , RpcParamVal "@Max" TIIntN4 max
                            )
-  putStrLn $ "rets: " <> (show rets)
-  f rs
+
+  case resp of
+    RpcResponse rets () rs -> do
+      putStrLn $ "rets: " <> (show rets)
+      f rs
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
   where
     f :: [Some] -> IO ()
     f rs = forM_ rs print
@@ -394,28 +534,40 @@ rpc_sql3 conn min max = do
 
 rpc_insert1 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert1 conn title content = do
-  RpcResponse rets (Only id) () <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_InsertSome"::T.Text) ( nvarcharVal "@Title" title
                                        , nvarcharVal "@Content" content
                                        , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
                                        )
     :: IO (RpcResponse (Only Int) ())
-  putStrLn $ "rets: " <> (show rets)
-  putStrLn $ "id: " <> (show id)
+
+  case resp of
+    RpcResponse rets (Only id) () -> do
+      putStrLn $ "rets: " <> (show rets)
+      putStrLn $ "id: " <> (show id)
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
 
 
 rpc_insert2 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert2 conn title content = do
-  RpcResponse rets (id,time) () <- MSSQL.rpc conn $
+  resp <- MSSQL.rpc conn $
     RpcQuery ("SP_InsertSomeDate"::T.Text) ( nvarcharVal "@Title" title
                                            , nvarcharVal "@Content" content
                                            , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
                                            , RpcParamRef "@Created" TIDateTimeN8 (Nothing :: Maybe UTCTime)
                                            )
     :: IO (RpcResponse (Int,UTCTime) ())
-  putStrLn $ "rets: " <> (show rets)
-  putStrLn $ "id: " <> (show id)
-  putStrLn $ "time: " <> (show time)
+
+  case resp of
+    RpcResponse rets (id,time) () -> do
+      putStrLn $ "rets: " <> (show rets)
+      putStrLn $ "id: " <> (show id)
+      putStrLn $ "time: " <> (show time)
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
+
 
 
 
