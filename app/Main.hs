@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Main (main) where
 
@@ -18,17 +19,21 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.IO as LT
 
 import Database.Tds.Message
+import Database.Tds.Primitives.Fixed
 import Database.MSSQLServer.Connection
 import Database.MSSQLServer.Query
 import qualified Database.MSSQLServer.Connection as MSSQL
 import qualified Database.MSSQLServer.Query as MSSQL
 
 import Data.Time (UTCTime(..))
+import Data.Time (getCurrentTime,addUTCTime)
 import Data.UUID.Types (UUID(..))
+import qualified Data.UUID.Types as UUID
+import Data.Fixed (Fixed(..))
 import Data.Word (Word16)
 
 import Control.Monad (forM_)
-
+import Text.RawString.QQ (r)
 
 main :: IO ()
 main = do
@@ -61,6 +66,11 @@ main = do
 --    insert_table3 conn
 --    update_table1 conn
 --    delete_table1 conn
+--    create_proc1 conn
+--    create_proc2 conn
+--    create_proc3 conn
+--    create_proc4 conn
+--    create_proc5 conn
 --    exec_proc1_1 conn
 --    exec_proc1_2 conn
 --    exec_proc1_3 conn
@@ -74,6 +84,12 @@ main = do
 --    exec_proc3_1' conn
 --    exec_proc3_2' conn
 --    rpc1 conn 3
+--    rpc2 conn 3
+--    rpc3 conn
+--    rpc4 conn
+--    rpc4' conn
+--    rpc5 conn
+--    rpc5' conn
 --    rpc_rv1 conn 3
 --    rpc_rv_rs1 conn 3
 --    rpc_rs1 conn 5
@@ -293,6 +309,258 @@ delete_table1 conn = do
   return ()
 
 
+create_proc1 :: Connection -> IO ()
+create_proc1 conn = do
+  () <- MSSQL.sql conn "DROP PROCEDURE SP_InputDefault1"
+  () <- MSSQL.sql conn [r|
+CREATE PROCEDURE SP_InputDefault1
+	@Val1 int = 11
+AS
+BEGIN
+	RETURN @Val1 + 100
+END
+  |]
+  return ()
+
+
+create_proc2 :: Connection -> IO ()
+create_proc2 conn = do
+  () <- MSSQL.sql conn "DROP PROCEDURE SP_OutputDefault1"
+  () <- MSSQL.sql conn [r|
+CREATE PROCEDURE SP_OutputDefault1
+	@Ref1 int = 12 OUTPUT
+AS
+BEGIN
+	SET @Ref1 = @Ref1 + 33
+	Return 0
+END
+  |]
+  return ()
+
+
+create_proc3 :: Connection -> IO ()
+create_proc3 conn = do
+  () <- MSSQL.sql conn "DROP PROCEDURE SP_InputOutput1"
+  () <- MSSQL.sql conn [r|
+CREATE PROCEDURE SP_InputOutput1
+	 @vBit bit
+	,@vTinyint tinyint
+	,@vSmallInt smallint
+	,@vInt int
+	,@vBigint bigint
+	,@vSmallmoney smallmoney
+	,@vMoney money
+	,@vSmallDatetime smalldatetime
+	,@vDatetime datetime
+	,@vFloat24 float(24)
+	,@vReal real
+	,@vFloat53 float(53)
+	,@vDouble double precision
+	,@vUniqueidentifier uniqueidentifier
+	,@vDecimal decimal(10,4)
+	,@vNumeric numeric(11,5)
+	,@vChar char(20)
+	,@vVarchar varchar(20)
+	,@vText text
+	,@vNchar nchar(20)
+	,@vNvarchar nvarchar(20)
+	,@vNtext ntext
+	,@vBinary binary(20)
+	,@vVarbinary varbinary(20)
+	,@vImage image
+
+	,@rBit bit OUTPUT
+	,@rTinyint tinyint OUTPUT
+	,@rSmallInt smallint OUTPUT
+	,@rInt int OUTPUT
+	,@rBigint bigint OUTPUT
+	,@rSmallmoney smallmoney OUTPUT
+	,@rMoney money OUTPUT
+	,@rSmallDatetime smalldatetime OUTPUT
+	,@rDatetime datetime OUTPUT
+	,@rFloat24 float(24) OUTPUT
+	,@rReal real OUTPUT
+	,@rFloat53 float(53) OUTPUT
+	,@rDouble double precision OUTPUT
+	,@rUniqueidentifier uniqueidentifier OUTPUT
+	,@rDecimal decimal(10,4) OUTPUT
+	,@rNumeric numeric(11,5) OUTPUT
+	,@rChar char(20) OUTPUT
+	,@rVarchar varchar(20) OUTPUT
+--	,@rText text OUTPUT
+	,@rNchar nchar(20) OUTPUT
+	,@rNvarchar nvarchar(20) OUTPUT
+--	,@rNtext ntext OUTPUT
+	,@rBinary binary(20) OUTPUT
+	,@rVarbinary varbinary(20) OUTPUT
+--	,@rImage image OUTPUT
+
+AS
+BEGIN
+
+	SET @rBit = @vBit
+	SET @rTinyint = @vTinyint
+	SET @rSmallInt = @vSmallInt
+	SET @rInt = @vInt
+	SET @rBigint = @vBigint
+	SET @rSmallmoney = @vSmallmoney
+	SET @rMoney = @vMoney
+	SET @rSmallDatetime = @vSmallDatetime
+	SET @rDatetime = @vDatetime
+	SET @rFloat24 = @vFloat24
+	SET @rReal = @vReal
+	SET @rFloat53 = @vFloat53
+	SET @rDouble = @vDouble
+	SET @rUniqueidentifier = @vUniqueidentifier
+	SET @rDecimal = @vDecimal
+	SET @rNumeric = @vNumeric
+	SET @rChar = @vChar
+	SET @rVarchar = @vVarchar
+--	SET @rText = @vText
+	SET @rNchar = @vNchar
+	SET @rNvarchar = @vNvarchar
+--	SET @rNtext = @vNtext
+	SET @rBinary = @vBinary
+	SET @rVarbinary = @vVarbinary
+--	SET @rImage = @vImage
+
+	Return 0
+END
+  |]
+  return ()
+
+
+create_proc4 :: Connection -> IO ()
+create_proc4 conn = do
+  () <- MSSQL.sql conn "DROP PROCEDURE SP_InputOutputDefault1"
+  () <- MSSQL.sql conn [r|
+CREATE PROCEDURE SP_InputOutputDefault1
+	 @vBit bit = 1
+	,@vTinyint tinyint = 21
+	,@vSmallInt smallint = 22
+	,@vInt int = 23
+	,@vBigint bigint = 24
+	,@vSmallmoney smallmoney = 2345.6789
+	,@vMoney money = 3345.6789
+	,@vSmallDatetime smalldatetime = '2019/08/01 10:00'
+	,@vDatetime datetime = '2019/08/01 10:30'
+	,@vFloat24 float(24) = 4345.6789
+	,@vReal real = 5345.6789
+	,@vFloat53 float(53) = 6345.6789
+	,@vDouble double precision = 6345.6789
+	,@vUniqueidentifier uniqueidentifier = '22223333-4444-aaaa-bbbb-ccccddddffff'
+	,@vDecimal decimal(10,4) = 7345.6789
+	,@vNumeric numeric(11,5) = 8345.67891
+	,@vChar char(20) = 'efgh1234'
+	,@vVarchar varchar(20) = 'efgh1234'
+	,@vText text = 'efgh1234'
+	,@vNchar nchar(20) = N'efgh1234'
+	,@vNvarchar nvarchar(20) = N'efgh1234'
+	,@vNtext ntext = 'efgh1234'
+	,@vBinary binary(20) = 0x0102030405060708
+	,@vVarbinary varbinary(20) = 0x0102030405060708
+	,@vImage image = 0x0102030405060708
+
+	,@rBit bit OUTPUT
+	,@rTinyint tinyint OUTPUT
+	,@rSmallInt smallint OUTPUT
+	,@rInt int OUTPUT
+	,@rBigint bigint OUTPUT
+	,@rSmallmoney smallmoney OUTPUT
+	,@rMoney money OUTPUT
+	,@rSmallDatetime smalldatetime OUTPUT
+	,@rDatetime datetime OUTPUT
+	,@rFloat24 float(24) OUTPUT
+	,@rReal real OUTPUT
+	,@rFloat53 float(53) OUTPUT
+	,@rDouble double precision OUTPUT
+	,@rUniqueidentifier uniqueidentifier OUTPUT
+	,@rDecimal decimal(10,4) OUTPUT
+	,@rNumeric numeric(11,5) OUTPUT
+	,@rChar char(20) OUTPUT
+	,@rVarchar varchar(20) OUTPUT
+--	,@rText text OUTPUT
+	,@rNchar nchar(20) OUTPUT
+	,@rNvarchar nvarchar(20) OUTPUT
+--	,@rNtext ntext OUTPUT
+	,@rBinary binary(20) OUTPUT
+	,@rVarbinary varbinary(20) OUTPUT
+--	,@rImage image OUTPUT
+
+AS
+BEGIN
+
+	SET @rBit = @vBit
+	SET @rTinyint = @vTinyint
+	SET @rSmallInt = @vSmallInt
+	SET @rInt = @vInt
+	SET @rBigint = @vBigint
+	SET @rSmallmoney = @vSmallmoney
+	SET @rMoney = @vMoney
+	SET @rSmallDatetime = @vSmallDatetime
+	SET @rDatetime = @vDatetime
+	SET @rFloat24 = @vFloat24
+	SET @rReal = @vReal
+	SET @rFloat53 = @vFloat53
+	SET @rDouble= @vDouble
+	SET @rUniqueidentifier = @vUniqueidentifier
+	SET @rDecimal = @vDecimal
+	SET @rNumeric = @vNumeric
+	SET @rChar = @vChar
+	SET @rVarchar = @vVarchar
+--	SET @rText = @vText
+	SET @rNchar = @vNchar
+	SET @rNvarchar = @vNvarchar
+--	SET @rNtext = @vNtext
+	SET @rBinary = @vBinary
+	SET @rVarbinary = @vVarbinary
+--	SET @rImage = @vImage
+
+	Return 0
+END
+  |]
+  return ()
+
+
+create_proc5 :: Connection -> IO ()
+create_proc5 conn = do
+  () <- MSSQL.sql conn "DROP PROCEDURE SP_InputOutputDefault2"
+  () <- MSSQL.sql conn [r|
+CREATE PROCEDURE SP_InputOutputDefault2
+	 @rBit bit = 1 OUT
+	,@rTinyint tinyint = 21 OUT
+	,@rSmallInt smallint = 22 OUT
+	,@rInt int = 23 OUT
+	,@rBigint bigint = 24 OUT
+	,@rSmallmoney smallmoney = 2345.6789 OUT
+	,@rMoney money = 3345.6789 OUT
+	,@rSmallDatetime smalldatetime = '2019/08/01 10:00' OUT
+	,@rDatetime datetime = '2019/08/01 10:30' OUT
+	,@rFloat24 float(24) = 4345.6789 OUT
+	,@rReal real = 5345.6789 OUT
+	,@rFloat53 float(53) = 6345.6789 OUT
+	,@rDouble double precision = 6345.6789 OUT
+	,@rUniqueidentifier uniqueidentifier = '22223333-4444-aaaa-bbbb-ccccddddffff' OUT
+	,@rDecimal decimal(10,4) = 7345.6789 OUT
+	,@rNumeric numeric(11,5) = 8345.67891 OUT
+	,@rChar char(20) = 'efgh1234' OUT
+	,@rVarchar varchar(20) = 'efgh1234' OUT
+--	,@rText text = 'efgh1234' OUT
+	,@rNchar nchar(20) = N'efgh1234' OUT
+	,@rNvarchar nvarchar(20) = N'efgh1234' OUT
+--	,@rNtext ntext = 'efgh1234' OUT
+	,@rBinary binary(20) = 0x0102030405060708 OUT
+	,@rVarbinary varbinary(20) = 0x0102030405060708 OUT
+--	,@rImage image = 0x0102030405060708 OUT
+
+AS
+BEGIN
+	Return 0
+END
+  |]
+  return ()
+
+
 exec_proc1_1 :: Connection -> IO ()
 exec_proc1_1 conn = do
   _ <- MSSQL.sql conn "EXEC SP_Input1 @Val1=3" :: IO ()
@@ -368,17 +636,662 @@ exec_proc3_2' conn = do
 rpc1 :: Connection -> Int -> IO ()
 rpc1 conn val1 = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_Input1"::T.Text) $ RpcParamVal "@Val1" TIIntN4 val1
+--    RpcQuery ("SP_InputDefault1"::T.Text) $ intVal "@Val1" (Just val1)
+    RpcQuery ("SP_InputDefault1"::T.Text) ()
+
 
   case resp of
     RpcResponse rets () () -> putStrLn $ "rets: " <> (show rets)
     RpcResponseError info -> putStr "error: " >> printInfo info
 
 
+rpc2 :: Connection -> Int -> IO ()
+rpc2 conn val1 = do
+  resp <- MSSQL.rpc conn $
+--    RpcQuery ("SP_OutputDefault1"::T.Text) (intDefRef "@Ref1" :: RpcParam (Maybe Int))
+    RpcQuery ("SP_OutputDefault1"::T.Text) (intRef "@Ref1" (Just (3 :: Int)))
+    :: IO (RpcResponse (Only Int) ())
+
+
+  case resp of
+    RpcResponse rets (Only ref1) () -> do
+      putStrLn $ "rets: " <> (show rets)
+      putStrLn $ "ref1: " <> (show ref1)
+    RpcResponseError info -> putStr "error: " >> printInfo info
+
+
+rpc3 :: Connection -> IO ()
+rpc3 conn = do
+  ut1 <- getCurrentTime
+  let ut2 = addUTCTime (60*5) ut1
+  resp <- MSSQL.rpc conn $
+    RpcQuery ("SP_InputOutput1"::T.Text) (bitVal "@vBit" (Just (1::Int))
+                                         ,tinyintVal "@vTinyint" (Just (11::Int))
+                                         ,smallintVal "@vSmallint" (Just (12::Int))
+                                         ,intVal "@vInt" (Just (13::Int))
+                                         ,bigintVal "@vBigint" (Just (14::Integer))
+                                         ,smallmoneyVal "@vSmallmoney" (Just (Money 1234.5678))
+                                         ,moneyVal "@vMoney" (Just (Money 2234.5678))
+                                         ,smalldatetimeVal "@vSmalldatetime" (Just ut1)
+                                         ,datetimeVal "@vDatetime" (Just ut2)
+                                         ,float24Val "@vFloat24" (Just (3234.5678::Float))
+                                         ,realVal "@vReal" (Just (4234.5678::Float))
+                                         ,float53Val "@vFloat53" (Just (5234.5678::Double))
+                                         ,doubleVal "@vDouble" (Just (5234.5678::Double))
+                                         ,uniqueidentifierVal "@vUniqueidentifier" (UUID.fromString "11112222-3333-4444-aaaa-bbbbccccffff")
+                                         ,decimalVal "@vDecimal" 10 (Right (6234.5678::Fixed4))
+                                         ,numericVal "@vNumeric" 11 (Right (7234.56789::Fixed5))
+                                         ,charVal "@vChar" (Just ("abcd1234"::B.ByteString))
+                                         ,varcharVal "@vVarchar" (Just ("abcd2234"::B.ByteString))
+                                         ,textVal "@vText" (Just ("abcd3234"::B.ByteString))
+                                         ,ncharVal "@vNchar" (Just ("abcd4234"::T.Text))
+                                         ,nvarcharVal "@vNvarchar" (Just ("abcd5234"::T.Text))
+                                         ,ntextVal "@vNtext" (Just ("abcd6234"::T.Text))
+                                         ,binaryVal "@vBinary" (Just (B.pack [0,1,2,3,4,5,6,7]))
+                                         ,varbinaryVal "@vVarbinary" (Just (B.pack [0,1,2,3,4,5,6,7]))
+                                         ,imageVal "@vImage" (Just (B.pack [0,1,2,3,4,5,6,7]))
+
+                                         ,bitRef "@rBit" (Nothing :: Maybe Int)
+                                         ,tinyintRef "@rTinyint" (Nothing :: Maybe Int)
+                                         ,smallintRef "@rSmallint" (Nothing :: Maybe Int)
+                                         ,intRef "@rInt" (Nothing :: Maybe Int)
+                                         ,bigintRef "@rBigint" (Nothing :: Maybe Integer)
+                                         ,smallmoneyRef "@rSmallmoney" (Nothing :: Maybe Money)
+                                         ,moneyRef "@rMoney" (Nothing :: Maybe Money)
+                                         ,smalldatetimeRef "@rSmalldatetime" (Nothing :: Maybe UTCTime)
+                                         ,datetimeRef "@rDatetime" (Nothing :: Maybe UTCTime)
+                                         ,float24Ref "@rFloat24" (Nothing :: Maybe Float)
+                                         ,realRef "@rReal" (Nothing :: Maybe Float)
+                                         ,float53Ref "@rFloat53" (Nothing :: Maybe Double)
+                                         ,doubleRef "@rDouble" (Nothing :: Maybe Double)
+                                         ,uniqueidentifierRef "@rUniqueidentifier" (Nothing :: Maybe UUID)
+                                         ,decimalRef "@rDecimal" 10 ((Left 4)::(Either Scale (Fixed4)))
+                                         ,numericRef "@rNumeric" 11 ((Left 5)::(Either Scale (Fixed5)))
+                                         ,charRef "@rChar" 20 Nothing
+                                         ,varcharRef "@rVarchar" 20 Nothing
+--                                         ,textRef "@rText" 20 Nothing
+                                         ,ncharRef "@rNchar" 20 Nothing
+                                         ,nvarcharRef "@rNvarchar" 20 Nothing
+--                                         ,ntextRef "@rNtext" 20 Nothing
+                                         ,binaryRef "@rBinary" 20 Nothing
+                                         ,varbinaryRef "@rVarbinary" 20 Nothing
+--                                         ,imageRef "@rImage" 20 Nothing
+                                         )
+    :: IO (RpcResponse ( (Maybe Bool)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Integer)
+                       , (Maybe Money)
+                       , (Maybe Money)
+                       , (Maybe UTCTime)
+                       , (Maybe UTCTime)
+                       , (Maybe Float)
+                       , (Maybe Float)
+                       , (Maybe Double)
+                       , (Maybe Double)
+                       , (Maybe UUID)
+                       , (Maybe Fixed4)
+                       , (Maybe Fixed5)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       , (Maybe T.Text)
+                       , (Maybe T.Text)
+--                       , (Maybe T.Text)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       ) ())
+
+
+  case resp of
+    RpcResponse rets ((Just rBit)
+                     ,(Just rTinyint)
+                     ,(Just rSmallint)
+                     ,(Just rInt)
+                     ,(Just rBigint)
+                     ,(Just rSmallmoney)
+                     ,(Just rMoney)
+                     ,(Just vSmalldatetime)
+                     ,(Just vDatetime)
+                     ,(Just vFloat24)
+                     ,(Just vReal)
+                     ,(Just vFloat53)
+                     ,(Just vDouble)
+                     ,(Just vUniqueidentifier)
+                     ,(Just vDecimal)
+                     ,(Just vNumeric)
+                     ,(Just vChar)
+                     ,(Just vVarchar)
+--                     ,(Just vText)
+                     ,(Just vNchar)
+                     ,(Just vNvarchar)
+--                     ,(Just vNtext)
+                     ,(Just vBinary)
+                     ,(Just vVarbinary)
+--                     ,(Just vImage)
+                     ) () -> do
+      putStrLn $ "rets: " <> (show rets)
+--      putStrLn $ "ref1: " <> (show ref1)
+      putStrLn $ (show rBit)
+        <> " " <> (show rTinyint)
+        <> " " <> (show rSmallint)
+        <> " " <> (show rInt)
+        <> " " <> (show rBigint)
+        <> " " <> (show rSmallmoney)
+        <> " " <> (show rMoney)
+        <> " " <> (show vSmalldatetime)
+        <> " " <> (show vDatetime)
+        <> " " <> (show vFloat24)
+        <> " " <> (show vReal)
+        <> " " <> (show vFloat53)
+        <> " " <> (show vDouble)
+        <> " " <> (show vUniqueidentifier)
+        <> " " <> (show vDecimal)
+        <> " " <> (show vNumeric)
+        <> " " <> (show vChar)
+        <> " " <> (show vVarchar)
+--        <> " " <> (show vText)
+        <> " " <> (show vNchar)
+        <> " " <> (show vNvarchar)
+--        <> " " <> (show vNtext)
+        <> " " <> (show vBinary)
+        <> " " <> (show vVarbinary)
+--        <> " " <> (show vImage)
+    RpcResponseError info -> putStr "error: " >> printInfo info
+
+
+rpc4 :: Connection -> IO ()
+rpc4 conn = do
+  ut1 <- getCurrentTime
+  let ut2 = addUTCTime (60*5) ut1
+  resp <- MSSQL.rpc conn $
+    RpcQuery ("SP_InputOutputDefault1"::T.Text) (bitVal "@vBit" (Just (1::Int))
+                                                ,tinyintVal "@vTinyint" (Just (11::Int))
+                                                ,smallintVal "@vSmallint" (Just (12::Int))
+                                                ,intVal "@vInt" (Just (13::Int))
+                                                ,bigintVal "@vBigint" (Just (14::Integer))
+                                                ,smallmoneyVal "@vSmallmoney" (Just (Money 1234.5678))
+                                                ,moneyVal "@vMoney" (Just (Money 2234.5678))
+                                                ,smalldatetimeVal "@vSmalldatetime" (Just ut1)
+                                                ,datetimeVal "@vDatetime" (Just ut2)
+                                                ,float24Val "@vFloat24" (Just (3234.5678::Float))
+                                                ,realVal "@vReal" (Just (4234.5678::Float))
+                                                ,float53Val "@vFloat53" (Just (5234.5678::Double))
+                                                ,doubleVal "@vDouble" (Just (5234.5678::Double))
+                                                ,uniqueidentifierVal "@vUniqueidentifier" (UUID.fromString "11112222-3333-4444-aaaa-bbbbccccffff")
+                                                ,decimalVal "@vDecimal" 10 (Right (6234.5678::Fixed4))
+                                                ,numericVal "@vNumeric" 11 (Right (7234.56789::Fixed5))
+                                                ,charVal "@vChar" (Just ("abcd1234"::B.ByteString))
+                                                ,varcharVal "@vVarchar" (Just ("abcd2234"::B.ByteString))
+                                                ,textVal "@vText" (Just ("abcd3234"::B.ByteString))
+                                                ,ncharVal "@vNchar" (Just ("abcd4234"::T.Text))
+                                                ,nvarcharVal "@vNvarchar" (Just ("abcd5234"::T.Text))
+                                                ,ntextVal "@vNtext" (Just ("abcd6234"::T.Text))
+                                                ,binaryVal "@vBinary" (Just (B.pack [0,1,2,3,4,5,6,7]))
+                                                ,varbinaryVal "@vVarbinary" (Just (B.pack [0,1,2,3,4,5,6,7]))
+                                                ,imageVal "@vImage" (Just (B.pack [0,1,2,3,4,5,6,7]))
+
+                                                ,bitRef "@rBit" (Nothing :: Maybe Int)
+                                                ,tinyintRef "@rTinyint" (Nothing :: Maybe Int)
+                                                ,smallintRef "@rSmallint" (Nothing :: Maybe Int)
+                                                ,intRef "@rInt" (Nothing :: Maybe Int)
+                                                ,bigintRef "@rBigint" (Nothing :: Maybe Integer)
+                                                ,smallmoneyRef "@rSmallmoney" (Nothing :: Maybe Money)
+                                                ,moneyRef "@rMoney" (Nothing :: Maybe Money)
+                                                ,smalldatetimeRef "@rSmalldatetime" (Nothing :: Maybe UTCTime)
+                                                ,datetimeRef "@rDatetime" (Nothing :: Maybe UTCTime)
+                                                ,float24Ref "@rFloat24" (Nothing :: Maybe Float)
+                                                ,realRef "@rReal" (Nothing :: Maybe Float)
+                                                ,float53Ref "@rFloat53" (Nothing :: Maybe Double)
+                                                ,doubleRef "@rDouble" (Nothing :: Maybe Double)
+                                                ,uniqueidentifierRef "@rUniqueidentifier" (Nothing :: Maybe UUID)
+                                                ,decimalRef "@rDecimal" 10 ((Left 4)::(Either Scale (Fixed4)))
+                                                ,numericRef "@rNumeric" 11 ((Left 5)::(Either Scale (Fixed5)))
+                                                ,charRef "@rChar" 20 Nothing
+                                                ,varcharRef "@rVarchar" 20 Nothing
+--                                                ,textRef "@rText" 20 Nothing
+                                                ,ncharRef "@rNchar" 20 Nothing
+                                                ,nvarcharRef "@rNvarchar" 20 Nothing
+--                                                ,ntextRef "@rNtext" 20 Nothing
+                                                ,binaryRef "@rBinary" 20 Nothing
+                                                ,varbinaryRef "@rVarbinary" 20 Nothing
+--                                                ,imageRef "@rImage" 20 Nothing
+                                                )
+    :: IO (RpcResponse ( (Maybe Bool)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Integer)
+                       , (Maybe Money)
+                       , (Maybe Money)
+                       , (Maybe UTCTime)
+                       , (Maybe UTCTime)
+                       , (Maybe Float)
+                       , (Maybe Float)
+                       , (Maybe Double)
+                       , (Maybe Double)
+                       , (Maybe UUID)
+                       , (Maybe Fixed4)
+                       , (Maybe Fixed5)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       , (Maybe T.Text)
+                       , (Maybe T.Text)
+--                       , (Maybe T.Text)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       ) ())
+
+
+  case resp of
+    RpcResponse rets ((Just rBit)
+                     ,(Just rTinyint)
+                     ,(Just rSmallint)
+                     ,(Just rInt)
+                     ,(Just rBigint)
+                     ,(Just rSmallmoney)
+                     ,(Just rMoney)
+                     ,(Just vSmalldatetime)
+                     ,(Just vDatetime)
+                     ,(Just vFloat24)
+                     ,(Just vReal)
+                     ,(Just vFloat53)
+                     ,(Just vDouble)
+                     ,(Just vUniqueidentifier)
+                     ,(Just vDecimal)
+                     ,(Just vNumeric)
+                     ,(Just vChar)
+                     ,(Just vVarchar)
+--                     ,(Just vText)
+                     ,(Just vNchar)
+                     ,(Just vNvarchar)
+--                     ,(Just vNtext)
+                     ,(Just vBinary)
+                     ,(Just vVarbinary)
+--                     ,(Just vImage)
+                     ) () -> do
+      putStrLn $ "rets: " <> (show rets)
+--      putStrLn $ "ref1: " <> (show ref1)
+      putStrLn $ (show rBit)
+        <> " " <> (show rTinyint)
+        <> " " <> (show rSmallint)
+        <> " " <> (show rInt)
+        <> " " <> (show rBigint)
+        <> " " <> (show rSmallmoney)
+        <> " " <> (show rMoney)
+        <> " " <> (show vSmalldatetime)
+        <> " " <> (show vDatetime)
+        <> " " <> (show vFloat24)
+        <> " " <> (show vReal)
+        <> " " <> (show vFloat53)
+        <> " " <> (show vDouble)
+        <> " " <> (show vUniqueidentifier)
+        <> " " <> (show vDecimal)
+        <> " " <> (show vNumeric)
+        <> " " <> (show vChar)
+        <> " " <> (show vVarchar)
+--        <> " " <> (show vText)
+        <> " " <> (show vNchar)
+        <> " " <> (show vNvarchar)
+--        <> " " <> (show vNtext)
+        <> " " <> (show vBinary)
+        <> " " <> (show vVarbinary)
+--        <> " " <> (show vImage)
+    RpcResponseError info -> putStr "error: " >> printInfo info
+
+
+rpc4' :: Connection -> IO ()
+rpc4' conn = do
+  resp <- MSSQL.rpc conn $
+    RpcQuery ("SP_InputOutputDefault1"::T.Text) (bitRef "@rBit" (Nothing :: Maybe Int)
+                                                ,tinyintRef "@rTinyint" (Nothing :: Maybe Int)
+                                                ,smallintRef "@rSmallint" (Nothing :: Maybe Int)
+                                                ,intRef "@rInt" (Nothing :: Maybe Int)
+                                                ,bigintRef "@rBigint" (Nothing :: Maybe Integer)
+                                                ,smallmoneyRef "@rSmallmoney" (Nothing :: Maybe Money)
+                                                ,moneyRef "@rMoney" (Nothing :: Maybe Money)
+                                                ,smalldatetimeRef "@rSmalldatetime" (Nothing :: Maybe UTCTime)
+                                                ,datetimeRef "@rDatetime" (Nothing :: Maybe UTCTime)
+                                                ,float24Ref "@rFloat24" (Nothing :: Maybe Float)
+                                                ,realRef "@rReal" (Nothing :: Maybe Float)
+                                                ,float53Ref "@rFloat53" (Nothing :: Maybe Double)
+                                                ,doubleRef "@rDouble" (Nothing :: Maybe Double)
+                                                ,uniqueidentifierRef "@rUniqueidentifier" (Nothing :: Maybe UUID)
+                                                ,decimalRef "@rDecimal" 10 ((Left 4)::(Either Scale (Fixed4)))
+                                                ,numericRef "@rNumeric" 11 ((Left 5)::(Either Scale (Fixed5)))
+                                                ,charRef "@rChar" 20 Nothing
+                                                ,varcharRef "@rVarchar" 20 Nothing
+--                                                ,textRef "@rText" 20 Nothing
+                                                ,ncharRef "@rNchar" 20 Nothing
+                                                ,nvarcharRef "@rNvarchar" 20 Nothing
+--                                                ,ntextRef "@rNtext" 20 Nothing
+                                                ,binaryRef "@rBinary" 20 Nothing
+                                                ,varbinaryRef "@rVarbinary" 20 Nothing
+--                                                ,imageRef "@rImage" 20 Nothing
+                                                )
+    :: IO (RpcResponse ( (Maybe Bool)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Integer)
+                       , (Maybe Money)
+                       , (Maybe Money)
+                       , (Maybe UTCTime)
+                       , (Maybe UTCTime)
+                       , (Maybe Float)
+                       , (Maybe Float)
+                       , (Maybe Double)
+                       , (Maybe Double)
+                       , (Maybe UUID)
+                       , (Maybe Fixed4)
+                       , (Maybe Fixed5)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       , (Maybe T.Text)
+                       , (Maybe T.Text)
+--                       , (Maybe T.Text)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       ) ())
+
+
+  case resp of
+    RpcResponse rets ((Just rBit)
+                     ,(Just rTinyint)
+                     ,(Just rSmallint)
+                     ,(Just rInt)
+                     ,(Just rBigint)
+                     ,(Just rSmallmoney)
+                     ,(Just rMoney)
+                     ,(Just vSmalldatetime)
+                     ,(Just vDatetime)
+                     ,(Just vFloat24)
+                     ,(Just vReal)
+                     ,(Just vFloat53)
+                     ,(Just vDouble)
+                     ,(Just vUniqueidentifier)
+                     ,(Just vDecimal)
+                     ,(Just vNumeric)
+                     ,(Just vChar)
+                     ,(Just vVarchar)
+--                     ,(Just vText)
+                     ,(Just vNchar)
+                     ,(Just vNvarchar)
+--                     ,(Just vNtext)
+                     ,(Just vBinary)
+                     ,(Just vVarbinary)
+--                     ,(Just vImage)
+                     ) () -> do
+      putStrLn $ "rets: " <> (show rets)
+--      putStrLn $ "ref1: " <> (show ref1)
+      putStrLn $ (show rBit)
+        <> " " <> (show rTinyint)
+        <> " " <> (show rSmallint)
+        <> " " <> (show rInt)
+        <> " " <> (show rBigint)
+        <> " " <> (show rSmallmoney)
+        <> " " <> (show rMoney)
+        <> " " <> (show vSmalldatetime)
+        <> " " <> (show vDatetime)
+        <> " " <> (show vFloat24)
+        <> " " <> (show vReal)
+        <> " " <> (show vFloat53)
+        <> " " <> (show vDouble)
+        <> " " <> (show vUniqueidentifier)
+        <> " " <> (show vDecimal)
+        <> " " <> (show vNumeric)
+        <> " " <> (show vChar)
+        <> " " <> (show vVarchar)
+--        <> " " <> (show vText)
+        <> " " <> (show vNchar)
+        <> " " <> (show vNvarchar)
+--        <> " " <> (show vNtext)
+        <> " " <> (show vBinary)
+        <> " " <> (show vVarbinary)
+--        <> " " <> (show vImage)
+    RpcResponseError info -> putStr "error: " >> printInfo info
+
+
+rpc5 :: Connection -> IO ()
+rpc5 conn = do
+  ut1 <- getCurrentTime
+  let ut2 = addUTCTime (60*5) ut1
+  resp <- MSSQL.rpc conn $
+    RpcQuery ("SP_InputOutputDefault2"::T.Text) (bitRef "@rBit" (Just (1::Int))
+                                                ,tinyintRef "@rTinyint" (Just (11::Int))
+                                                ,smallintRef "@rSmallint" (Just (12::Int))
+                                                ,intRef "@rInt" (Just (13::Int))
+                                                ,bigintRef "@rBigint" (Just (14::Integer))
+                                                ,smallmoneyRef "@rSmallmoney" (Just (Money 1234.5678))
+                                                ,moneyRef "@rMoney" (Just (Money 2234.5678))
+                                                ,smalldatetimeRef "@rSmalldatetime" (Just ut1)
+                                                ,datetimeRef "@rDatetime" (Just ut2)
+                                                ,float24Ref "@rFloat24" (Just (3234.5678::Float))
+                                                ,realRef "@rReal" (Just (4234.5678::Float))
+                                                ,float53Ref "@rFloat53" (Just (5234.5678::Double))
+                                                ,doubleRef "@rDouble" (Just (5234.5678::Double))
+                                                ,uniqueidentifierRef "@rUniqueidentifier" (UUID.fromString "11112222-3333-4444-aaaa-bbbbccccffff")
+                                                ,decimalRef "@rDecimal" 10 (Right (6234.5678::Fixed4))
+                                                ,numericRef "@rNumeric" 11 (Right (7234.56789::Fixed5))
+                                                ,charRef "@rChar" 20 (Just ("abcd1234"::B.ByteString))
+                                                ,varcharRef "@rVarchar" 20 (Just ("abcd2234"::B.ByteString))
+--                                                ,textRef "@rText" 20 (Just ("abcd3234"::B.ByteString))
+                                                ,ncharRef "@rNchar"  20 (Just ("abcd4234"::T.Text))
+                                                ,nvarcharRef "@rNvarchar" 20 (Just ("abcd5234"::T.Text))
+--                                                ,ntextRef "@rNtext" 20 (Just ("abcd6234"::T.Text))
+                                                ,binaryRef "@rBinary" 20 (Just (B.pack [0,1,2,3,4,5,6,7]))
+                                                ,varbinaryRef "@rVarbinary"  20 (Just (B.pack [0,1,2,3,4,5,6,7]))
+--                                                ,imageRef "@rImage" 20 (Just (B.pack [0,1,2,3,4,5,6,7]))
+                                                )
+    :: IO (RpcResponse ( (Maybe Bool)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Integer)
+                       , (Maybe Money)
+                       , (Maybe Money)
+                       , (Maybe UTCTime)
+                       , (Maybe UTCTime)
+                       , (Maybe Float)
+                       , (Maybe Float)
+                       , (Maybe Double)
+                       , (Maybe Double)
+                       , (Maybe UUID)
+                       , (Maybe Fixed4)
+                       , (Maybe Fixed5)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       , (Maybe T.Text)
+                       , (Maybe T.Text)
+--                       , (Maybe T.Text)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       ) ())
+
+
+  case resp of
+    RpcResponse rets ((Just rBit)
+                     ,(Just rTinyint)
+                     ,(Just rSmallint)
+                     ,(Just rInt)
+                     ,(Just rBigint)
+                     ,(Just rSmallmoney)
+                     ,(Just rMoney)
+                     ,(Just vSmalldatetime)
+                     ,(Just vDatetime)
+                     ,(Just vFloat24)
+                     ,(Just vReal)
+                     ,(Just vFloat53)
+                     ,(Just vDouble)
+                     ,(Just vUniqueidentifier)
+                     ,(Just vDecimal)
+                     ,(Just vNumeric)
+                     ,(Just vChar)
+                     ,(Just vVarchar)
+--                     ,(Just vText)
+                     ,(Just vNchar)
+                     ,(Just vNvarchar)
+--                     ,(Just vNtext)
+                     ,(Just vBinary)
+                     ,(Just vVarbinary)
+--                     ,(Just vImage)
+                     ) () -> do
+      putStrLn $ "rets: " <> (show rets)
+--      putStrLn $ "ref1: " <> (show ref1)
+      putStrLn $ (show rBit)
+        <> " " <> (show rTinyint)
+        <> " " <> (show rSmallint)
+        <> " " <> (show rInt)
+        <> " " <> (show rBigint)
+        <> " " <> (show rSmallmoney)
+        <> " " <> (show rMoney)
+        <> " " <> (show vSmalldatetime)
+        <> " " <> (show vDatetime)
+        <> " " <> (show vFloat24)
+        <> " " <> (show vReal)
+        <> " " <> (show vFloat53)
+        <> " " <> (show vDouble)
+        <> " " <> (show vUniqueidentifier)
+        <> " " <> (show vDecimal)
+        <> " " <> (show vNumeric)
+        <> " " <> (show vChar)
+        <> " " <> (show vVarchar)
+--        <> " " <> (show vText)
+        <> " " <> (show vNchar)
+        <> " " <> (show vNvarchar)
+--        <> " " <> (show vNtext)
+        <> " " <> (show vBinary)
+        <> " " <> (show vVarbinary)
+--        <> " " <> (show vImage)
+    RpcResponseError info -> putStr "error: " >> printInfo info
+
+
+rpc5' :: Connection -> IO ()
+rpc5' conn = do
+  resp <- MSSQL.rpc conn $
+    RpcQuery ("SP_InputOutputDefault2"::T.Text) (bitDefRef "@rBit" :: (RpcParam (Maybe Int))
+                                                ,tinyintDefRef "@rTinyint" :: (RpcParam (Maybe Int))
+                                                ,smallintDefRef "@rSmallint" :: (RpcParam (Maybe Int))
+                                                ,intDefRef "@rInt" :: (RpcParam (Maybe Int))
+                                                ,bigintDefRef "@rBigint" :: (RpcParam (Maybe Int))
+                                                ,smallmoneyDefRef "@rSmallmoney" :: (RpcParam (Maybe Money))
+                                                ,moneyDefRef "@rMoney" :: (RpcParam (Maybe Money))
+                                                ,smalldatetimeDefRef "@rSmalldatetime" :: (RpcParam (Maybe UTCTime))
+                                                ,datetimeDefRef "@rDatetime" :: (RpcParam (Maybe UTCTime))
+                                                ,float24DefRef "@rFloat24" :: (RpcParam (Maybe Float))
+                                                ,realDefRef "@rReal" :: (RpcParam (Maybe Float))
+                                                ,float53DefRef "@rFloat53" :: (RpcParam (Maybe Double))
+                                                ,doubleDefRef "@rDouble" :: (RpcParam (Maybe Double))
+                                                ,uniqueidentifierDefRef "@rUniqueidentifier" :: (RpcParam (Maybe UUID))
+                                                ,decimalDefRef "@rDecimal" 10 4 :: (RpcParam(Maybe Fixed4))
+                                                ,numericDefRef "@rNumeric" 11 5 :: (RpcParam(Maybe Fixed5))
+                                                ,charDefRef "@rChar" 20
+                                                ,varcharDefRef "@rVarchar" 20
+--                                                ,textDefRef "@rText" 20
+                                                ,ncharDefRef "@rNchar"  20
+                                                ,nvarcharDefRef "@rNvarchar" 20
+--                                                ,ntextDefRef "@rNtext" 20
+                                                ,binaryDefRef "@rBinary" 20
+                                                ,varbinaryDefRef "@rVarbinary"  20
+--                                                ,imageDefRef "@rImage" 20
+                                                )
+    :: IO (RpcResponse ( (Maybe Bool)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Int)
+                       , (Maybe Integer)
+                       , (Maybe Money)
+                       , (Maybe Money)
+                       , (Maybe UTCTime)
+                       , (Maybe UTCTime)
+                       , (Maybe Float)
+                       , (Maybe Float)
+                       , (Maybe Double)
+                       , (Maybe Double)
+                       , (Maybe UUID)
+                       , (Maybe Fixed4)
+                       , (Maybe Fixed5)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       , (Maybe T.Text)
+                       , (Maybe T.Text)
+--                       , (Maybe T.Text)
+                       , (Maybe B.ByteString)
+                       , (Maybe B.ByteString)
+--                       , (Maybe B.ByteString)
+                       ) ())
+
+
+  case resp of
+    RpcResponse rets ((Just rBit)
+                     ,(Just rTinyint)
+                     ,(Just rSmallint)
+                     ,(Just rInt)
+                     ,(Just rBigint)
+                     ,(Just rSmallmoney)
+                     ,(Just rMoney)
+                     ,(Just vSmalldatetime)
+                     ,(Just vDatetime)
+                     ,(Just vFloat24)
+                     ,(Just vReal)
+                     ,(Just vFloat53)
+                     ,(Just vDouble)
+                     ,(Just vUniqueidentifier)
+                     ,(Just vDecimal)
+                     ,(Just vNumeric)
+                     ,(Just vChar)
+                     ,(Just vVarchar)
+--                     ,(Just vText)
+                     ,(Just vNchar)
+                     ,(Just vNvarchar)
+--                     ,(Just vNtext)
+                     ,(Just vBinary)
+                     ,(Just vVarbinary)
+--                     ,(Just vImage)
+                     ) () -> do
+      putStrLn $ "rets: " <> (show rets)
+--      putStrLn $ "ref1: " <> (show ref1)
+      putStrLn $ (show rBit)
+        <> " " <> (show rTinyint)
+        <> " " <> (show rSmallint)
+        <> " " <> (show rInt)
+        <> " " <> (show rBigint)
+        <> " " <> (show rSmallmoney)
+        <> " " <> (show rMoney)
+        <> " " <> (show vSmalldatetime)
+        <> " " <> (show vDatetime)
+        <> " " <> (show vFloat24)
+        <> " " <> (show vReal)
+        <> " " <> (show vFloat53)
+        <> " " <> (show vDouble)
+        <> " " <> (show vUniqueidentifier)
+        <> " " <> (show vDecimal)
+        <> " " <> (show vNumeric)
+        <> " " <> (show vChar)
+        <> " " <> (show vVarchar)
+--        <> " " <> (show vText)
+        <> " " <> (show vNchar)
+        <> " " <> (show vNvarchar)
+--        <> " " <> (show vNtext)
+        <> " " <> (show vBinary)
+        <> " " <> (show vVarbinary)
+--        <> " " <> (show vImage)
+    RpcResponseError info -> putStr "error: " >> printInfo info
+
+
 rpc_rv1 :: Connection -> Int -> IO ()
 rpc_rv1 conn id = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_OutputTwice"::T.Text) $ RpcParamRef "@ID" TIIntN4 id
+    RpcQuery ("SP_OutputTwice"::T.Text) $ intRef "@ID" (Just id)
     :: IO (RpcResponse (Only Int) ())
 
   case resp of
@@ -392,7 +1305,7 @@ rpc_rv1 conn id = do
 rpc_rv_rs1 :: Connection -> Int -> IO ()
 rpc_rv_rs1 conn id = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_OutputTwice_SelectSome"::T.Text) $ RpcParamRef "@ID" TIIntN4 id
+    RpcQuery ("SP_OutputTwice_SelectSome"::T.Text) $ intRef "@ID" (Just id)
     :: IO (RpcResponse (Only Int) [Some])
 
   case resp of
@@ -407,7 +1320,7 @@ rpc_rv_rs1 conn id = do
 rpc_rs1 :: Connection -> Int -> IO ()
 rpc_rs1 conn id = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id
+    RpcQuery ("SP_SelectSomeByID"::T.Text) $ intVal "@ID" (Just id)
 
   case resp of
     RpcResponse rets () rs -> do
@@ -425,8 +1338,8 @@ rpc_rs1 conn id = do
 rpc_rs2 :: Connection -> Int -> Int -> IO ()
 rpc_rs2 conn id1 id2 = do
   (resp1, resp2) <- MSSQL.rpc conn
-    ( RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id1
-    , RpcQuery ("SP_SelectSomeByID"::T.Text) $ RpcParamVal "@ID" TIIntN4 id2
+    ( RpcQuery ("SP_SelectSomeByID"::T.Text) $ intVal "@ID" (Just id1)
+    , RpcQuery ("SP_SelectSomeByID"::T.Text) $ intVal "@ID" (Just id2)
     )
 
   case resp1 of
@@ -454,7 +1367,7 @@ rpc_rs2 conn id1 id2 = do
 rpc_rs3 :: Connection -> Int -> IO ()
 rpc_rs3 conn id = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_SplitSomeByID"::T.Text) $ RpcParamVal "" TIIntN4 id
+    RpcQuery ("SP_SplitSomeByID"::T.Text) $ intVal "" (Just id)
 
   case resp of
     RpcResponse rets () (rs1,rs2) -> do
@@ -474,7 +1387,7 @@ rpc_rs3 conn id = do
 rpc_sql1 :: Connection -> IO ()
 rpc_sql1 conn = do
   resp <- MSSQL.rpc conn $
-    RpcQuery SP_ExecuteSql $ nvarcharVal "" "SELECT * FROM TSome"
+    RpcQuery SP_ExecuteSql $ nvarcharVal "" (Just "SELECT * FROM TSome")
 
   case resp of
     RpcResponse rets () rs -> do
@@ -492,9 +1405,9 @@ rpc_sql1 conn = do
 rpc_sql2 :: Connection -> Int -> IO ()
 rpc_sql2 conn max = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("sp_executesql"::T.Text) ( nvarcharVal "" "SELECT * FROM TSome WHERE someID < @Max"
-                                       , nvarcharVal "" "@Max Int"
-                                       , RpcParamVal "" TIIntN4 max
+    RpcQuery ("sp_executesql"::T.Text) ( nvarcharVal "" (Just "SELECT * FROM TSome WHERE someID < @Max")
+                                       , nvarcharVal "" (Just "@Max Int")
+                                       , intVal "" (Just max)
                                        )
 
   case resp of
@@ -513,10 +1426,10 @@ rpc_sql2 conn max = do
 rpc_sql3 :: Connection -> Int -> Int -> IO ()
 rpc_sql3 conn min max = do
   resp <- MSSQL.rpc conn $
-    RpcQuery (0xa::Word16) ( nvarcharVal "" "SELECT * FROM TSome WHERE @Min < someID AND someID < @Max"
-                           , nvarcharVal "" "@Min Int, @Max Int"
-                           , RpcParamVal "@Min" TIIntN4 min
-                           , RpcParamVal "@Max" TIIntN4 max
+    RpcQuery (0xa::Word16) ( nvarcharVal "" (Just "SELECT * FROM TSome WHERE @Min < someID AND someID < @Max")
+                           , nvarcharVal "" (Just "@Min Int, @Max Int")
+                           , intVal "@Min" (Just min)
+                           , intVal "@Max" (Just max)
                            )
 
   case resp of
@@ -535,9 +1448,10 @@ rpc_sql3 conn min max = do
 rpc_insert1 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert1 conn title content = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_InsertSome"::T.Text) ( nvarcharVal "@Title" title
-                                       , nvarcharVal "@Content" content
-                                       , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
+    RpcQuery ("SP_InsertSome"::T.Text) ( nvarcharVal "@Title" (Just title)
+                                       , nvarcharVal "@Content" (Just content)
+--                                       , moneyVal "@Price" (Just 1111.0) -- overwrite default
+                                       , intRef "@ID" (Nothing :: Maybe Int)
                                        )
     :: IO (RpcResponse (Only Int) ())
 
@@ -553,10 +1467,10 @@ rpc_insert1 conn title content = do
 rpc_insert2 :: Connection -> T.Text -> T.Text -> IO ()
 rpc_insert2 conn title content = do
   resp <- MSSQL.rpc conn $
-    RpcQuery ("SP_InsertSomeDate"::T.Text) ( nvarcharVal "@Title" title
-                                           , nvarcharVal "@Content" content
-                                           , RpcParamRef "@ID" TIIntN4 (Nothing :: Maybe Int)
-                                           , RpcParamRef "@Created" TIDateTimeN8 (Nothing :: Maybe UTCTime)
+    RpcQuery ("SP_InsertSomeDate"::T.Text) ( nvarcharVal "@Title" (Just title)
+                                           , nvarcharVal "@Content" (Just content)
+                                           , intRef "@ID" (Nothing :: Maybe Int)
+                                           , datetimeRef "@Created" (Nothing :: Maybe UTCTime)
                                            )
     :: IO (RpcResponse (Int,UTCTime) ())
 
@@ -610,7 +1524,7 @@ test_select2 conn = do
   rs <- MSSQL.sql conn "SELECT t2ID, t2GUID, t2Decimal0, t2Decimal1, t2Decimal37, t2Decimal38, t2Numeric0, t2Numeric1, t2Numeric37, t2Numeric38, t2GUIDN, t2DecimalN0, t2DecimalN1, t2DecimalN37, t2DecimalN38, t2NumericN0, t2NumericN1, t2NumericN37, t2NumericN38 FROM TTypes2"
   f rs
   where
-    f :: [(Int,UUID,Decimal,Decimal,Decimal,Decimal,Decimal,Decimal,Decimal,Decimal,(Maybe UUID),(Maybe Decimal),(Maybe Decimal),(Maybe Decimal),(Maybe Decimal),(Maybe Decimal),(Maybe Decimal),(Maybe Decimal),(Maybe Decimal))] -> IO ()
+    f :: [(Int,UUID,Fixed0,Fixed1,Fixed37,Fixed38,Fixed0,Fixed1,Fixed37,Fixed38,(Maybe UUID),(Maybe Fixed0),(Maybe Fixed1),(Maybe Fixed37),(Maybe Fixed38),(Maybe Fixed0),(Maybe Fixed1),(Maybe Fixed37),(Maybe Fixed38))] -> IO ()
     f rs = forM_ rs $ \(id,guid,dec0,dec1,dec37,dec38,num0,num1,num37,num38,guidn,decn0,decn1,decn37,decn38,numn0,numn1,numn37,numn38) -> do
       putStr $ (show id)
       putStr $ ", " <> (show guid)
