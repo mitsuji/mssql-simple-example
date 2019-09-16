@@ -64,6 +64,7 @@ main = do
 --    insert_table1 conn
 --    insert_table2 conn
 --    insert_table3 conn
+--    insert_table4 conn
 --    update_table1 conn
 --    delete_table1 conn
 --    create_proc1 conn
@@ -295,6 +296,18 @@ insert_table3 conn = do
   return ()
 
   
+insert_table4 :: Connection -> IO ()
+insert_table4 conn = do
+  () <- MSSQL.sql conn [r|
+BEGIN TRAN;
+INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());
+INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());
+INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());
+INSERT INTO TSome(someTitle,someContent,somePrice,someCreated) VALUES('title','content',12345.60,GETDATE());
+COMMIT TRAN;
+  |]
+  return ()
+
 update_table1 :: Connection -> IO ()
 update_table1 conn = do
   RowCount rc <- MSSQL.sql conn "UPDATE TSome SET somePrice = somePrice + 1 WHERE someID < 5" :: IO RowCount
