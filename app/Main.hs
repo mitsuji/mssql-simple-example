@@ -99,6 +99,7 @@ main = do
 --    rpc_sql1 conn
 --    rpc_sql2 conn 5
 --    rpc_sql3 conn 5 13
+--    rpc_sql4 conn
 --    rpc_insert1 conn "title1" "content1"
 --    rpc_insert2 conn "title2" "content2"
 --    test_select1 conn
@@ -1456,6 +1457,22 @@ rpc_sql3 conn min max = do
     f :: [Some] -> IO ()
     f rs = forM_ rs print
 
+
+
+rpc_sql4 :: Connection -> IO ()
+rpc_sql4 conn = do
+  resp <- MSSQL.rpc conn $
+    RpcQuery (0xa::Word16) ( nvarcharVal "" (Just "UPDATE TTypes2 SET t2GUID = @G1, t2GUIDN = @G2 WHERE t2ID = 1")
+                           , nvarcharVal "" (Just "@G1 UniqueIdentifier, @G2 UniqueIdentifier")
+                           , uniqueidentifierVal "@G1" (UUID.fromString "3EC68940-4275-4F2C-96F6-975ACD2DB037")
+                           , uniqueidentifierVal "@G2" (UUID.fromString "3EC68940-4275-4F2C-96F6-975ACD2DB037")
+                           )
+
+  case resp of
+    RpcResponse rets () () -> do
+      putStrLn $ "rets: " <> (show rets)
+    RpcResponseError info ->
+      putStr "error: " >> printInfo info
 
 
 rpc_insert1 :: Connection -> T.Text -> T.Text -> IO ()
