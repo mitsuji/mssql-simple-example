@@ -37,12 +37,12 @@ import Text.RawString.QQ (r)
 
 main :: IO ()
 main = do
-  let info = defaultConnectInfo { connectHost = "192.168.0.1"
+  let info = defaultConnectInfo { connectHost = "localhost"
                                 , connectPort = "1433"
-                                , connectDatabase = "some_database"
-                                , connectUser = "some_user"
-                                , connectPassword = "some_password"
---                                , connectEncryption = 0x02 -- [MEMO] 0x00: Encrypt Login Only, 0x02: No Encryption
+                                , connectDatabase = "mss-test"
+                                , connectUser = "mss-test_admin"
+                                , connectPassword = "msst_adm-1234"
+                                , connectEncryption = 0x02 -- [MEMO] 0x00: Encrypt Login Only, 0x02: No Encryption
                                 }
   withSocketsDo $
     flip catches [authErrorHandler,queryErrorHandler] $
