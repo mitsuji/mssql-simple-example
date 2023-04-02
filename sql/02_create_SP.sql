@@ -1,3 +1,6 @@
+USE [mss-test]
+GO
+
 CREATE PROCEDURE SP_SelectSomeByID 
 	@ID int
 AS

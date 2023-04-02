@@ -1,3 +1,6 @@
+USE [mss-test]
+GO
+
 CREATE TABLE TSome (
 	someID int IDENTITY(1,1) NOT NULL,
 	someTitle nvarchar(40) NOT NULL,

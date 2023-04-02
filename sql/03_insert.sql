@@ -1,3 +1,6 @@
+USE [mss-test]
+GO
+
 INSERT INTO TTypes1
            (t1ID
            ,t1Bit
