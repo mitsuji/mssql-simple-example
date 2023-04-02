@@ -22,14 +22,13 @@ Download and install [stack](https://docs.haskellstack.org/en/stable/README/).
 
 Setup example database by using scripts in sql directory.
 
-* Create a database
-* Create a login account on the database
+* Setup some kind of SQL Server environment.  
+  Using [docker image](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker) would be a convinient chose.
 
-* Execute sql/01_create_Table.sql on the database
-* Execute sql/02_create_SP.sql on the database
-* Execute sql/03_insert.sql on the database
-
-* Adjust ```ConnectInfo``` in app/Main.hs to make suitable for the login account
+* Execute sql/00_setup_Database.sql on the master database.
+* Execute sql/01_create_Table.sql on the mss-test database.
+* Execute sql/02_create_SP.sql on the mss-test database.
+* Execute sql/03_insert.sql on the mss-test database.
 
 
 ### Run example
