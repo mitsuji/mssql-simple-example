@@ -50,7 +50,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - ms-tds-0.4.0.2
-- mssql-simple-0.6.0.3
+- mssql-simple-0.6.0.4
 #- ../ms-tds
 #- ../mssql-simple
 
