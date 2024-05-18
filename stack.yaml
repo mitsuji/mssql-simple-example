@@ -23,8 +23,10 @@
 #resolver: lts-16.31  # ghc-8.8.4
 #resolver: lts-18.21  # ghc-8.10.7
 #resolver: lts-19.33  # ghc-9.0.2
-resolver: lts-20.16  # ghc-9.2.7
-#resolver: nightly-2023-03-31 # ghc-9.4.4
+#resolver: lts-20.26  # ghc-9.2.8
+#resolver: lts-21.25  # ghc-9.4.8
+resolver: lts-22.22  # ghc-9.6.5
+#resolver: nightly-2024-05-16 # ghc-9.8.2
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -49,8 +51,8 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- ms-tds-0.4.0.2
-- mssql-simple-0.6.0.4
+- ms-tds-0.4.0.3
+- mssql-simple-0.6.0.5
 #- ../ms-tds
 #- ../mssql-simple
 
